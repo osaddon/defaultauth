@@ -23,7 +23,7 @@ In `/etc/nova/api-paste.ini`, add default auth filter
 And add the following section to the file:
 
     [filter:defaultauth]
-    use = egg:defaultauth#defaultauthapp
+    use = egg:defaultauth#defaultauth
     path = http://localhost:5000/v2.0/tokens
     user = <your userid>
     password = <your password>
