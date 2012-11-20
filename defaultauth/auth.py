@@ -21,8 +21,6 @@ from eventlet.green.httplib import HTTPConnection, HTTPSConnection
 from urlparse import urlparse
 import time
 
-from nova import flags
-from nova.openstack.common import cfg
 from nova.openstack.common import log as logging
 from nova import wsgi
 
@@ -40,8 +38,10 @@ class DefaultAuth(wsgi.Middleware):
         self.auth_user = kwargs.get('user', 'admin')
         self.auth_pass = kwargs.get('password', 'ps')
         self.auth_tenant = kwargs.get('tenant', 'admin')
+        self.auth_id = kwargs.get('auth_path_id', '/defaultauth')
         self.auth_path_obj = urlparse(self.auth_path)
         self.token = None
+        self.tenant_id = None
         self.token_timestamp = time.time()
         super(DefaultAuth, self).__init__(*args)
 
@@ -51,12 +51,20 @@ class DefaultAuth(wsgi.Middleware):
             # already has auth token
             pass
         else:
+            # We expire the token every 10 minutes
             if time.time() - self.token_timestamp >= 600000:
                 self.token_timestamp = time.time()
                 self.token = None
 
             self.access_resource(req)
-        return self.application
+        if req.path == self.auth_id:
+            res = Response()
+            res.status = 200
+            res.headers['Content-Type'] = 'text/plain'
+            res.body = str(self.tenant_id) + '\r\n'
+            return res
+        else:
+            return self.application
 
     def access_resource(self, req):
         if self.token is None:
@@ -84,6 +92,7 @@ class DefaultAuth(wsgi.Middleware):
             if res.status == 200:
                 res_obj = json.loads(res.read())
                 self.token = res_obj['access']['token']['id']
+                self.tenant_id = res_obj['access']['token']['tenant']['id']
             conn.close()
 
         req.headers['X_AUTH_TOKEN'] = self.token

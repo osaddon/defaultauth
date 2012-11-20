@@ -43,6 +43,6 @@ setup(
         ],
     entry_points='''
       [paste.filter_factory]
-      defaulthauth = defaultauth.auth:DefaultAuth.factory
+      defaultauth = defaultauth.auth:DefaultAuth.factory
       ''',
 )

@@ -12,6 +12,15 @@ Setup
 3. Install this python egg: `sudo python setup.py install`
 4. Configure default auth to work with Nova:
 
+In `/etc/nova/api-paste.ini`, add a path allow the filter to get back tenant id
+
+    [composite:osapi_compute]
+    use = call:nova.api.openstack.urlmap:urlmap_factory
+    /: oscomputeversions
+    ...
+    ...
+    /defaultauth: openstack_compute_api_v2
+
 In `/etc/nova/api-paste.ini`, add default auth filter
 
     [composite:openstack_compute_api_v2]
@@ -28,6 +37,17 @@ And add the following section to the file:
     user = <your userid>
     password = <your password>
     tenant = <your tenant>
+    auth_path_id = /defaultauth
 
-Running tests
-=============
+Test and verify it works
+========================
+1. Get tenant id by issue the following command
+
+    curl http://192.168.1.210:8774/defaultauth 
+
+    This will return the tenant id
+
+2. Use the tenant id from the above to access OpenStack artifacts:
+
+    curl http://192.168.1.210:8774/v2/<tenant_id>/images
+
