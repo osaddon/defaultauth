@@ -41,13 +41,14 @@ And add the following section to the file:
 
 Test and verify it works
 ========================
-1. Get tenant id by issue the following command
+
+Get tenant id by issue the following command
 
     curl http://192.168.1.210:8774/defaultauth 
 
     This will return the tenant id
 
-2. Use the tenant id from the above to access OpenStack artifacts:
+Use the tenant id from the above to access OpenStack artifacts:
 
     curl http://192.168.1.210:8774/v2/<tenant_id>/images
 
