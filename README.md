@@ -38,6 +38,7 @@ And add the following section to the file:
     password = <your password>
     tenant = <your tenant>
     auth_path_id = /defaultauth
+    sub_tenant_id = true (default)
 
 Test and verify it works
 ========================

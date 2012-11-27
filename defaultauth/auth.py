@@ -19,6 +19,7 @@ import json
 from webob import Request, Response
 from eventlet.green.httplib import HTTPConnection, HTTPSConnection
 from urlparse import urlparse
+
 import time
 
 from nova.openstack.common import log as logging
@@ -37,7 +38,14 @@ class DefaultAuth(wsgi.Middleware):
                                     'http://localhost:5000/v2.0/tokens')
         self.auth_user = kwargs.get('user', 'admin')
         self.auth_pass = kwargs.get('password', 'ps')
-        self.auth_tenant = kwargs.get('tenant', 'admin')
+        self.auth_tenant = kwargs.get('tenant', 'admin') 
+        self.sub_tenant_id = kwargs.get('sub_tenant_id', True)
+        if isinstance(self.sub_tenant_id, basestring):
+            self.sub_tenant_id = self.sub_tenant_id.lower()
+            if self.sub_tenant_id in ['true', 'yes']:
+                self.sub_tenant_id = True
+            else:
+                self.sub_tenant_id = False
         self.auth_id = kwargs.get('auth_path_id', '/defaultauth')
         self.auth_path_obj = urlparse(self.auth_path)
         self.token = None
@@ -57,6 +65,7 @@ class DefaultAuth(wsgi.Middleware):
                 self.token = None
 
             self.access_resource(req)
+
         if req.path == self.auth_id:
             res = Response()
             res.status = 200
@@ -64,6 +73,11 @@ class DefaultAuth(wsgi.Middleware):
             res.body = str(self.tenant_id) + '\r\n'
             return res
         else:
+            if self.sub_tenant_id:
+                parts = req.environ.get('PATH_INFO').split('/')
+                if len(parts) > 1 and self.tenant_id:
+                    parts[1] = self.tenant_id
+                    req.environ['PATH_INFO'] = '/'.join(parts)
             return self.application
 
     def access_resource(self, req):
